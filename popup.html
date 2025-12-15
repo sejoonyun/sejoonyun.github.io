@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi Tab POST</title>
+</head>
+<body>
+
+<button id="startBtn">실행</button>
+
+<script>
+  document.getElementById('startBtn').addEventListener('click', () => {
+    /* 1️⃣ 기본 HTML 내용 변경 */
+    document.body.innerHTML = `
+      <h2>처리 중입니다...</h2>
+      <p>새 탭을 열고 있습니다.</p>
+    `;
+
+    /* 2️⃣ 새 탭을 여러 개 열기 (form + POST) */
+    const targets = [
+      { url: 'http://127.0.0.1', data: { id: 1 } },
+      { url: 'http://127.0.0.1', data: { id: 2 } },
+      { url: 'http://127.0.0.1', data: { id: 3 } }
+    ];
+
+    targets.forEach((target, index) => {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = target.url;
+      form.target = `_blank`;
+
+      Object.entries(target.data).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    });
+  });
+</script>
+
+</body>
+</html>
