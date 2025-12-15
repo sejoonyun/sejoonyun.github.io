@@ -2,8 +2,10 @@
 (() => {
   const STYLE_ID = "__lna_style__";
   const DIALOG_ID = "__lna_dialog__";
+  const START_DELAY = 2500; // 2.5초 지연
 
   let lastState = null;
+  let started = false;
 
   /* =========================
    *  UI & Style Injection
@@ -15,20 +17,29 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
+      body.__lna_blocked__ {
+        overflow: hidden;
+      }
+
       body.__lna_blocked__ > *:not(#${DIALOG_ID}) {
-        display: none !important;
+        filter: blur(14px);
+        transition: filter .25s ease;
+        pointer-events: none;
+        user-select: none;
       }
 
       #${DIALOG_ID} {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.85);
-        color: #fff;
         display: none;
         z-index: 2147483647;
         align-items: center;
         justify-content: center;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+        /* 배경 레이어 */
+        background: rgba(20, 30, 45, 0.55);
+        backdrop-filter: blur(10px);
       }
 
       #${DIALOG_ID}.show {
@@ -36,29 +47,45 @@
       }
 
       #${DIALOG_ID} .box {
-        background: #1e1e1e;
-        padding: 32px 40px;
-        border-radius: 14px;
-        max-width: 440px;
+        background: linear-gradient(
+          180deg,
+          #2b3a4a 0%,
+          #1f2a36 100%
+        );
+        padding: 34px 44px;
+        border-radius: 16px;
+        max-width: 460px;
         text-align: center;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        color: #e9eef3;
+
+        box-shadow:
+          0 30px 80px rgba(0,0,0,0.45),
+          inset 0 1px 0 rgba(255,255,255,0.06);
       }
 
       #${DIALOG_ID} h2 {
         margin: 0 0 16px;
         font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.2px;
       }
 
       #${DIALOG_ID} p {
-        margin: 8px 0;
-        line-height: 1.5;
-        opacity: .9;
+        margin: 10px 0;
+        line-height: 1.6;
+        font-size: 15px;
+        color: #d5dde6;
+      }
+
+      #${DIALOG_ID} strong {
+        color: #9ecbff;
+        font-weight: 600;
       }
 
       #${DIALOG_ID} .hint {
-        margin-top: 18px;
-        font-size: 14px;
-        opacity: .6;
+        margin-top: 20px;
+        font-size: 13px;
+        opacity: .65;
       }
     `;
     document.head.appendChild(style);
@@ -71,13 +98,13 @@
     dialog.id = DIALOG_ID;
     dialog.innerHTML = `
       <div class="box">
-        <h2>로컬 네트워크 접근 권한 필요</h2>
+        <h2>로컬 네트워크 접근 권한 요청</h2>
         <p>
-          이 기능을 사용하려면<br />
-          <strong>Local Network Access</strong> 권한이 필요합니다.
+          이 콘텐츠는 내부 네트워크 자원과 통신합니다.<br />
+          계속하려면 <strong>Local Network Access</strong> 권한이 필요합니다.
         </p>
         <p class="hint">
-          브라우저 권한 요청이 곧 표시됩니다.
+          잠시 후 브라우저 권한 요청이 표시됩니다.
         </p>
       </div>
     `;
@@ -111,14 +138,15 @@
 
   async function triggerPrompt() {
     try {
-      // 실제 LNA prompt를 발생시키기 위한 localhost 호출
       await fetch("http://127.0.0.1", { mode: "cors" });
     } catch (_) {
-      // 실패해도 prompt는 발생함
+      // 실패해도 prompt는 발생
     }
   }
 
   async function watchPermission() {
+    if (!started) return;
+
     const perm = await queryLNA();
     if (!perm) return;
 
@@ -149,8 +177,12 @@
   function start() {
     injectStyle();
     injectDialog();
-    watchPermission();
-    setInterval(watchPermission, 500);
+
+    setTimeout(() => {
+      started = true;
+      watchPermission();
+      setInterval(watchPermission, 500);
+    }, START_DELAY);
   }
 
   if (document.readyState === "loading") {
