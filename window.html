@@ -2,48 +2,55 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>window.open + form target</title>
+  <title>Multi Popup POST</title>
 </head>
 <body>
 
-<button id="openBtn">새 창으로 POST</button>
+<button id="openBtn">팝업 3개 열기</button>
 
 <script>
   document.getElementById('openBtn').addEventListener('click', () => {
-    // 1️⃣ 새 window 먼저 열기 (user gesture 유지)
-    const popup = window.open('', 'postWindow');
 
-    if (!popup) {
-      alert('팝업이 차단되었습니다.');
-      return;
-    }
+    const popups = [
+      { name: 'popup1', url: '/api/page1', data: { id: 1 } },
+      { name: 'popup2', url: '/api/page2', data: { id: 2 } },
+      { name: 'popup3', url: '/api/page3', data: { id: 3 } }
+    ];
 
-    // 2️⃣ form 생성
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'http://127.0.0.1';
-    form.target = 'postWindow';
+    popups.forEach((popup, index) => {
 
-    // 3️⃣ POST 데이터
-    const data = {
-      userId: '123',
-      token: 'abc123'
-    };
+      // 1️⃣ popup window 열기 (GET 없이 빈 창)
+      const win = window.open(
+        '',
+        popup.name,
+        'width=400,height=300,left=' + (100 + index * 50) + ',top=' + (100 + index * 50)
+      );
 
-    Object.entries(data).forEach(([key, value]) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
+      if (!win) {
+        alert('팝업이 차단되었습니다.');
+        return;
+      }
+
+      // 2️⃣ form 생성
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = popup.url;
+      form.target = popup.name;
+
+      Object.entries(popup.data).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+
+      // 3️⃣ POST 요청
+      form.submit();
+      document.body.removeChild(form);
     });
-
-    document.body.appendChild(form);
-
-    // 4️⃣ POST 요청 → 새 window에서 로드
-    form.submit();
-
-    document.body.removeChild(form);
   });
 </script>
 
