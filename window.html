@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>window.open + form target</title>
+</head>
+<body>
+
+<button id="openBtn">새 창으로 POST</button>
+
+<script>
+  document.getElementById('openBtn').addEventListener('click', () => {
+    // 1️⃣ 새 window 먼저 열기 (user gesture 유지)
+    const popup = window.open('', 'postWindow');
+
+    if (!popup) {
+      alert('팝업이 차단되었습니다.');
+      return;
+    }
+
+    // 2️⃣ form 생성
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/api/submit';
+    form.target = 'postWindow';
+
+    // 3️⃣ POST 데이터
+    const data = {
+      userId: '123',
+      token: 'abc123'
+    };
+
+    Object.entries(data).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+
+    // 4️⃣ POST 요청 → 새 window에서 로드
+    form.submit();
+
+    document.body.removeChild(form);
+  });
+</script>
+
+</body>
+</html>
