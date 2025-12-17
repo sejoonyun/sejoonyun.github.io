@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 포트 검사기</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-bottom: 5px; }
+        input { margin-bottom: 10px; padding: 5px; width: 200px; }
+        button { padding: 10px; }
+        #result { margin-top: 20px; border: 1px solid #ccc; padding: 10px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket 포트 검사기</h1>
+    <label for="host">IP 또는 도메인 (기본: 127.0.0.1):</label>
+    <input type="text" id="host" value="127.0.0.1">
+
+    <label for="port">포트 번호:</label>
+    <input type="number" id="port" placeholder="예: 8080" required>
+
+    <button onclick="checkPorts()">포트 검사</button>
+
+    <div id="result"></div>
+
+    <script>
+        function checkPorts() {
+            const host = document.getElementById('host').value || '127.0.0.1';
+            const port = document.getElementById('port').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!port) {
+                resultDiv.innerText = '포트 번호를 입력해주세요.';
+                return;
+            }
+
+            resultDiv.innerText = '검사 중...\n';
+
+            // ws:// 검사
+            checkWebSocket('ws', host, port, resultDiv);
+
+            // wss:// 검사
+            checkWebSocket('wss', host, port, resultDiv);
+        }
+
+        function checkWebSocket(protocol, host, port, resultDiv) {
+            const url = `${protocol}://${host}:${port}/`;
+            const ws = new WebSocket(url);
+
+            ws.onopen = function() {
+                resultDiv.innerText += `${protocol.toUpperCase()} 포트 (${port})가 열려 있습니다.\n`;
+                ws.close();
+            };
+
+            ws.onerror = function() {
+                resultDiv.innerText += `${protocol.toUpperCase()} 포트 (${port})가 닫혀 있거나 연결할 수 없습니다.\n`;
+            };
+
+            ws.onclose = function(event) {
+                if (!event.wasClean) {
+                    // onerror에서 이미 처리됨
+                }
+            };
+        }
+    </script>
+</body>
+</html>
