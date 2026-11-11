@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi Popup POST</title>
+</head>
+<body>
+
+<button id="openBtn">팝업 3개 열기</button>
+
+<script>
+  document.getElementById('openBtn').addEventListener('click', () => {
+
+    const popups = [
+      { name: 'popup1', url: 'http://127.0.0.1', data: { id: 1 } },
+      { name: 'popup2', url: 'http://127.0.0.1', data: { id: 2 } },
+      { name: 'popup3', url: 'http://127.0.0.1', data: { id: 3 } }
+    ];
+
+    popups.forEach((popup, index) => {
+
+      // 1️⃣ popup window 열기 (GET 없이 빈 창)
+      const win = window.open(
+        '',
+        popup.name,
+        'width=400,height=300,left=' + (100 + index * 50) + ',top=' + (100 + index * 50)
+      );
+
+      if (!win) {
+        alert('팝업이 차단되었습니다.');
+        return;
+      }
+
+      // 2️⃣ form 생성
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = popup.url;
+      form.target = popup.name;
+
+      Object.entries(popup.data).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+
+      // 3️⃣ POST 요청
+      form.submit();
+      document.body.removeChild(form);
+    });
+  });
+</script>
+
+</body>
+</html>

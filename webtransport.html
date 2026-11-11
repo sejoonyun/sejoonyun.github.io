@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebTransport Port Checker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #log { white-space: pre-wrap; border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: auto; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Localhost WebTransport Port Checker</h1>
+    <label for="port">포트 번호 입력 (예: 3000):</label>
+    <input type="number" id="port" value="3000" min="1" max="65535">
+    <button id="checkButton">포트 검사</button>
+    
+    <h2>과정 로그:</h2>
+    <div id="log"></div>
+
+    <script>
+        const portInput = document.getElementById('port');
+        const checkButton = document.getElementById('checkButton');
+        const logDiv = document.getElementById('log');
+
+        function logMessage(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight; // 자동 스크롤
+        }
+
+        async function checkWebTransportPort() {
+            const port = portInput.value;
+            if (!port || isNaN(port)) {
+                logMessage('오류: 유효한 포트 번호를 입력하세요.');
+                return;
+            }
+
+            const url = `https://localhost:${port}`;
+            logMessage(`검사 시작: URL - ${url}`);
+
+            const startTime = performance.now(); // 시작 시간 측정 (밀리초 단위)
+
+            try {
+                logMessage('WebTransport 연결 시도 중...');
+                const transport = new WebTransport(url);
+
+                logMessage('연결 핸드셰이크 대기 중...');
+                await transport.ready;
+
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2); // 소수점 2자리
+
+                logMessage(`성공: 포트 ${port}에서 WebTransport 서버가 열려 있습니다!`);
+                logMessage(`총 소요 시간: ${duration} ms`);
+
+                // 연결 후 바로 닫기
+                transport.close();
+                logMessage('연결 종료.');
+            } catch (error) {
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+
+                logMessage(`실패: 포트 ${port} 연결 실패 - ${error.message}`);
+                logMessage(`총 소요 시간: ${duration} ms`);
+            }
+        }
+
+        checkButton.addEventListener('click', checkWebTransportPort);
+    </script>
+</body>
+</html>
